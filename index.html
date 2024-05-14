@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Game</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            margin-top: 10px;
+        }
+
+        #options li {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Quiz Game</h1>
+        <div id="question-container">
+            <h2 id="question">Question goes here</h2>
+            <ul id="options" class="list-unstyled">
+            </ul>
+        </div>
+        <div id="feedback" class="text-center font-weight-bold"></div>
+        <div id="timer" class="text-center">Time Left: <span id="time-left">10</span> seconds</div>
+        <button id="hint-btn" class="btn btn-primary btn-block">Hint</button>
+        <button id="next-btn" class="btn btn-primary btn-block" style="display:none;">Next Question</button>
+        <div id="score" class="text-center">Score: <span id="score-value">0</span></div>
+        <div id="leaderboard" class="mt-4"></div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        const quizData = [
+            {
+                question: "What is the capital of France?",
+                options: ["Paris", "London", "Berlin", "Madrid"],
+                answer: "Paris",
+                hint: "It's known as the City of Love."
+            },
+            {
+                question: "Which planet is known as the Red Planet?",
+                options: ["Earth", "Mars", "Venus", "Jupiter"],
+                answer: "Mars",
+                hint: "It's named after the Roman god of war."
+            },
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeLeft = 10; 
+        let timerInterval;
+        let hintsUsed = 0;
+
+        const questionElement = document.getElementById("question");
+        const optionsElement = document.getElementById("options");
+        const feedbackElement = document.getElementById("feedback");
+        const scoreElement = document.getElementById("score-value");
+        const nextButton = document.getElementById("next-btn");
+        const timerElement = document.getElementById("timer");
+        const timeLeftElement = document.getElementById("time-left");
+        const hintButton = document.getElementById("hint-btn");
+        const leaderboardElement = document.getElementById("leaderboard");
+
+        function loadQuestion() {
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionElement.innerText = currentQuestion.question;
+            optionsElement.innerHTML = "";
+            currentQuestion.options.forEach(option => {
+                const li = document.createElement("li");
+                li.innerText = option;
+                li.classList.add("mb-2");
+                li.onclick = () => checkAnswer(option);
+                optionsElement.appendChild(li);
+            });
+            startTimer();
+        }
+
+        function startTimer() {
+            timeLeft = 10; 
+            clearInterval(timerInterval); 
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timeLeftElement.innerText = timeLeft;
+            if (timeLeft === 0) {
+                clearInterval(timerInterval);
+                checkAnswer(null);
+            }
+        }
+
+        function checkAnswer(selectedOption) {
+            const currentQuestion = quizData[currentQuestionIndex];
+            clearInterval(timerInterval); 
+            if (selectedOption === currentQuestion.answer) {
+                feedbackElement.innerText = "Correct!";
+                score += timeLeft; 
+            } else {
+                feedbackElement.innerText = "Wrong! The correct answer is " + currentQuestion.answer;
+            }
+            scoreElement.innerText = score;
+            nextButton.style.display = "block";
+            optionsElement.querySelectorAll("li").forEach(li => {
+                li.onclick = null;
+            });
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+                feedbackElement.innerText = "";
+                nextButton.style.display = "none";
+            } else {
+                feedbackElement.innerText = "Quiz completed!";
+                nextButton.style.display = "none";
+                displayLeaderboard();
+            }
+        }
+
+        function displayHint() {
+            const currentQuestion = quizData[currentQuestionIndex];
+            if (hintsUsed < 2 && currentQuestion.hint) {
+                alert(currentQuestion.hint);
+                hintsUsed++;
+                hintButton.disabled = true;
+            } else {
+                alert("No more hints available!");
+            }
+        }
+
+        function displayLeaderboard() {
+            const sortedScores = [...Array(10)].map((_, i) => ({ name: `Player ${i+1}`, score: Math.floor(Math.random() * 100) })).sort((a, b) => b.score - a.score);
+            leaderboardElement.innerHTML = "<h2 class='text-center'>Leaderboard</h2>";
+            sortedScores.slice(0, 5).forEach((entry, index) => {
+                const listItem = document.createElement("div");
+                listItem.innerText = `${index + 1}. ${entry.name}: ${entry.score}`;
+                leaderboardElement.appendChild(listItem);
+            });
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        shuffleArray(quizData);
+        loadQuestion();
+
+        nextButton.addEventListener("click", nextQuestion);
+        hintButton.addEventListener("click", displayHint);
+    </script>
+</body>
+</html>
